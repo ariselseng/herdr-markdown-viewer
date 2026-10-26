@@ -95,6 +95,27 @@ action_status=$?
 assert_eq 0 "$action_status" "clipboard fallback: action succeeds"
 assert_contains "$(cat "$HERDR_STUB_LOG")" "$tmp/pbclip/selected.md" "clipboard path passed to herdr"
 
+# --- clipboard fallback (wl-paste stub, Wayland) ---
+mkdir "$tmp/wldir" "$tmp/wlclip"
+printf '# From Wayland clipboard\n' > "$tmp/wlclip/selected.md"
+
+cat > "$tmp/wldir/wl-paste" <<STUB
+#!/usr/bin/env bash
+printf '%s\n' "$tmp/wlclip/selected.md"
+STUB
+chmod +x "$tmp/wldir/wl-paste"
+
+: > "$HERDR_STUB_LOG"
+PATH="$tmp/wldir:/usr/bin:/bin" \
+  WAYLAND_DISPLAY=wayland-0 \
+  HERDR_PLUGIN_CONTEXT_JSON='{"selected_text":null,"focused_pane_cwd":"$tmp/proj","focused_pane_id":"w1:p1"}' \
+  MD_PREVIEW_NO_CLIPBOARD=0 \
+  bash open.sh 2> "$tmp/err.log"
+action_status=$?
+
+assert_eq 0 "$action_status" "wayland clipboard fallback: action succeeds"
+assert_contains "$(cat "$HERDR_STUB_LOG")" "$tmp/wlclip/selected.md" "wayland clipboard path passed to herdr"
+
 # --- missing context entirely ---
 : > "$HERDR_STUB_LOG"
 HERDR_BIN_PATH="$tmp/herdr" bash open.sh 2> "$tmp/err.log"

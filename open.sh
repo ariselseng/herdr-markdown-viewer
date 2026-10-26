@@ -125,6 +125,8 @@ main() {
     if [[ "${MD_PREVIEW_NO_CLIPBOARD:-0}" != "1" ]]; then
       if command -v pbpaste >/dev/null 2>&1; then
         selected="$(pbpaste | head -n 1)"
+      elif [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wl-paste >/dev/null 2>&1; then
+        selected="$(wl-paste --no-newline 2>/dev/null | head -n 1)"
       elif command -v xclip >/dev/null 2>&1; then
         selected="$(xclip -o -selection clipboard 2>/dev/null | head -n 1)"
       fi
